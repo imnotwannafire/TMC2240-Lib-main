@@ -21,6 +21,8 @@ uint8_t TMCStepper::iholddelay()  			{ GET_REG(iholddelay);	}
 
 
 // IHOLD_IRUN
+#define GET_REG_2240(SETTING) TMC2240_n::IHOLD_IRUN_t r{0}; r.sr = IHOLD_IRUN(); return r.SETTING
+
 uint32_t TMC2240Stepper::IHOLD_IRUN() { return IHOLD_IRUN_register.sr; }
 void TMC2240Stepper::IHOLD_IRUN(uint32_t input) {
 	IHOLD_IRUN_register.sr = input;
@@ -32,7 +34,7 @@ void 	TMC2240Stepper::irun(uint8_t B)  		{ SET_REG(irun); 		}
 void 	TMC2240Stepper::iholddelay(uint8_t B)	{ SET_REG(iholddelay); 	}
 void 	TMC2240Stepper::irundelay(uint8_t B)	{ SET_REG(irundelay); 	}
 
-uint8_t TMC2240Stepper::ihold() 				{ GET_REG(ihold);		}
-uint8_t TMC2240Stepper::irun()  				{ GET_REG(irun); 		}
-uint8_t TMC2240Stepper::iholddelay()  			{ GET_REG(iholddelay);	}
-uint8_t TMC2240Stepper::irundelay()  			{ GET_REG(irundelay);	}
+uint8_t TMC2240Stepper::ihold() 				{ GET_REG_2240(ihold);		}
+uint8_t TMC2240Stepper::irun()  				{ GET_REG_2240(irun); 		}
+uint8_t TMC2240Stepper::iholddelay()  			{ GET_REG_2240(iholddelay);	}
+uint8_t TMC2240Stepper::irundelay()  			{ GET_REG_2240(irundelay);	}

@@ -116,13 +116,13 @@ void TMC2240Stepper::CHOPCONF(uint32_t input) {
 uint32_t TMC2240Stepper::CHOPCONF() {
 	return read(CHOPCONF_register.address);
 }
-void TMC2240Stepper::toff		( uint8_t  B )	{ SET_REG(toff); 	}
+void TMC2240Stepper::toff		( uint8_t  B )	{ SET_REG(toff); if (B>0) _savedToff = B;	}
 void TMC2240Stepper::hstrt		( uint8_t  B )	{ SET_REG(hstrt); 	}
 void TMC2240Stepper::hend		( uint8_t  B )	{ SET_REG(hend); 	}
 void TMC2240Stepper::fd3		( bool     B )	{ SET_REG(fd3); 	}
 void TMC2240Stepper::disfdcc	( bool     B )	{ SET_REG(disfdcc); }
 void TMC2240Stepper::chm		( bool     B )	{ SET_REG(chm); 	}
-void TMC2240Stepper::TBL		( uint8_t  B )	{ SET_REG(TBL); 	}
+void TMC2240Stepper::TBL		( uint8_t  B )	{ SET_REG(tbl); 	}
 void TMC2240Stepper::vhighfs	( bool     B )	{ SET_REG(vhighfs); }
 void TMC2240Stepper::vhighchm	( bool     B )	{ SET_REG(vhighchm);}
 void TMC2240Stepper::tpfd		( uint8_t  B )	{ SET_REG(tpfd);	}

@@ -51,3 +51,25 @@ uint8_t TMC2209Stepper::semax()	{ GET_REG(semax);	}
 uint8_t TMC2209Stepper::sedn()	{ GET_REG(sedn);	}
 bool 	TMC2209Stepper::seimin(){ GET_REG(seimin);	}
 
+#define GET_REG_2240(SETTING) TMC2240_n::COOLCONF_t r{0}; r.sr = COOLCONF(); return r.SETTING
+uint32_t TMC2240Stepper::COOLCONF() { return COOLCONF_register.sr; }
+void TMC2240Stepper::COOLCONF(uint32_t data) {
+  COOLCONF_register.sr = data;
+  write(COOLCONF_register.address, COOLCONF_register.sr);
+}
+void TMC2240Stepper::sgt(uint8_t B) { SET_REG(sgt); }
+uint8_t TMC2240Stepper::sgt(){ GET_REG_2240(sgt); }
+
+void TMC2240Stepper::semin(uint8_t B) { SET_REG(semin); }
+void TMC2240Stepper::seup(uint8_t B) { SET_REG(seup); }
+void TMC2240Stepper::semax(uint8_t B) { SET_REG(semax); }
+void TMC2240Stepper::sedn(uint8_t B) { SET_REG(sedn); }
+void TMC2240Stepper::seimin(bool B) { SET_REG(seimin); }
+void TMC2240Stepper::sfilt(bool B) { SET_REG(sfilt); }
+
+uint8_t TMC2240Stepper::semin(){GET_REG_2240(semin);}
+uint8_t TMC2240Stepper::seup(){GET_REG_2240(seup);}
+uint8_t TMC2240Stepper::semax(){GET_REG_2240(semax);}
+uint8_t TMC2240Stepper::sedn(){GET_REG_2240(sedn);}
+bool TMC2240Stepper::seimin(){GET_REG_2240(seimin);}
+bool TMC2240Stepper::sfilt(){GET_REG_2240(sfilt);}
