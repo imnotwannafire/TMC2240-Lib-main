@@ -115,7 +115,7 @@ namespace TMC2240_n {
     union {
       uint32_t sr;
       struct {
-          uint16_t TPOWERDOWN : 8;
+          uint8_t TPOWERDOWN : 8;
       };
     };
   };

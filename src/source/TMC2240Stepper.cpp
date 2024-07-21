@@ -221,7 +221,7 @@ uint8_t TMC2240Stepper::pwm_grad_auto() { PWM_AUTO_t r{0}; r.sr = PWM_AUTO(); re
 #define SET_REG_2240(SETTING) GSTAT_register.SETTING = B; write(GSTAT_register.address, GSTAT_register.sr)
 
 uint8_t TMC2240Stepper::GSTAT()  			{ return read(TMC2240_n::GSTAT_t::address); }
-void TMC2240Stepper::GSTAT(uint32_t input) {
+void TMC2240Stepper::GSTAT(uint8_t input) {
   GSTAT_register.sr = input;
   write(GSTAT_register.address, GSTAT_register.sr);
 }
@@ -249,8 +249,8 @@ void TMC2240Stepper::vm_uvlo(bool B){
 }
 
 // W: TPOWERDOWN
-uint8_t TMC2240Stepper::TPOWERDOWN() { return TPOWERDOWN_register.sr; }
-void TMC2240Stepper::TPOWERDOWN(uint8_t input) {
+uint32_t TMC2240Stepper::TPOWERDOWN() { return TPOWERDOWN_register.sr; }
+void TMC2240Stepper::TPOWERDOWN(uint32_t input) {
   TPOWERDOWN_register.sr = input;
   write(TPOWERDOWN_register.address, TPOWERDOWN_register.sr);
 }

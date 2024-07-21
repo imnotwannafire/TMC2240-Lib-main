@@ -1430,14 +1430,14 @@ class TMC2240Stepper  {
 		void semax(uint8_t B);
 		void sedn(uint8_t B);
 		void seimin(bool B);
-		void sgt(uint16_t B);
+		void sgt(uint8_t B);
 		void sfilt(bool B);
 		uint8_t semin();
 		uint8_t seup();
 		uint8_t semax();
 		uint8_t sedn();
 		bool seimin();	
-		uint16_t sgt();
+		uint8_t sgt();
 		bool sfilt();	
 
 		// RW: PWMCONF
@@ -1513,8 +1513,8 @@ class TMC2240Stepper  {
 		void tpwmthrsb(uint8_t) ;
 
 		// R: TPOWERDOWN
-		uint8_t TPOWERDOWN();
-		void TPOWERDOWN(uint8_t input);
+		uint32_t TPOWERDOWN();
+		void TPOWERDOWN(uint32_t input);
 
 		uint16_t bytesWritten = 0;
 		bool CRCerror = false;
@@ -1537,9 +1537,6 @@ class TMC2240Stepper  {
 		int8_t hysteresis_end();
 		void hysteresis_start(uint8_t value);
 		uint8_t hysteresis_start();
-
-		uint8_t TPOWERDOWN();
-		void TPOWERDOWN(uint8_t input);
 	
 	protected:
 		INIT2240_REGISTER(COOLCONF)			{{.sr=0}};
