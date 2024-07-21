@@ -6,7 +6,7 @@
 #define SET_REG(SETTING) SG4_THRS_register.SETTING = B; write(SG4_THRS_register.address, SG4_THRS_register.sr)
 
 // SGT4
-uint32_t TMC2240Stepper::SG4_THRS() { return SG4_THRS_register.sr; }
+uint32_t TMC2240Stepper::SG4_THRS() { return read(SG4_THRS_register.address); }
 void TMC2240Stepper::SG4_THRS(uint32_t data) {
   SG4_THRS_register.sr = data;
   write(SG4_THRS_register.address, SG4_THRS_register.sr);

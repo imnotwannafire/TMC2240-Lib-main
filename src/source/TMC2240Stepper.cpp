@@ -43,16 +43,16 @@ void TMC2240Stepper::begin() {
 
 void TMC2240Stepper::push() {
 	GCONF(GCONF_register.sr);
-    DRV_CONF(DRV_CONF_register.sr);
+  DRV_CONF(DRV_CONF_register.sr);
 	IHOLD_IRUN(IHOLD_IRUN_register.sr);
 	CHOPCONF(CHOPCONF_register.sr);
 	PWMCONF(PWMCONF_register.sr);
 	TPWMTHRS(TPWMTHRS_register.sr);
-  	SG4_THRS(SG4_THRS_register.sr);
+  SG4_THRS(SG4_THRS_register.sr);
 	COOLCONF(COOLCONF_register.sr);
-  	TCOOLTHRS(TCOOLTHRS_register.sr);
+  TCOOLTHRS(TCOOLTHRS_register.sr);
 	GSTAT(GSTAT_register.sr);
-  	PWMCONF(PWMCONF_register.sr);
+  TPOWERDOWN(TPOWERDOWN_register.sr);
 }
 
 
@@ -83,8 +83,6 @@ void TMC2240Stepper::write(uint8_t addressByte, uint32_t config) {
 }
 
 
-
-
 uint32_t TMC2240Stepper::read(uint8_t address) {
 	char buf[4];
 	uint32_t response = 0UL;
@@ -101,36 +99,34 @@ uint32_t TMC2240Stepper::read(uint8_t address) {
 		switchCSpin(HIGH);
 		// step 2: Get response value of register
 		// Short delay may be required
-        delayMicroseconds(1);
+    delayMicroseconds(1);
 		switchCSpin(LOW);
-        buf[0] = TMC_SW_SPI->transfer(0x00); // dummy address for reading data
-        buf[1] = TMC_SW_SPI->transfer(0x00); // dummy data
-        buf[2] = TMC_SW_SPI->transfer(0x00); // dummy data
-        buf[3] = TMC_SW_SPI->transfer(0x00); // dummy data
-        switchCSpin(HIGH);
-
-
+    buf[0] = TMC_SW_SPI->transfer(0xFF); // dummy address for reading data
+    buf[1] = TMC_SW_SPI->transfer(0x00); // dummy data
+    buf[2] = TMC_SW_SPI->transfer(0x00); // dummy data
+    buf[3] = TMC_SW_SPI->transfer(0x00); // dummy data
+    switchCSpin(HIGH);
 
 	} else { // use HW SPI
 		SPI.beginTransaction(SPISettings(spi_speed, MSBFIRST, SPI_MODE3));
 		switchCSpin(LOW);
 		buf[0] = TMC_SW_SPI->transfer(address&0x7F);
-		buf[1] = TMC_SW_SPI->transfer(0xFF);
-		buf[2] = TMC_SW_SPI->transfer(0xFF);
-		buf[3] = TMC_SW_SPI->transfer(0xFF);
+		buf[1] = TMC_SW_SPI->transfer(0x00);
+		buf[2] = TMC_SW_SPI->transfer(0x00);
+		buf[3] = TMC_SW_SPI->transfer(0x00);
 		switchCSpin(HIGH);
 		SPI.endTransaction();
 
 		delayMicroseconds(1);
 
 		SPI.beginTransaction(SPISettings(spi_speed, MSBFIRST, SPI_MODE3));
-        switchCSpin(LOW);
-        buf[0] = SPI.transfer(0x00); // dummy address for reading data
-        buf[1] = SPI.transfer(0x00); // dummy data
-        buf[2] = SPI.transfer(0x00); // dummy data
-        buf[3] = SPI.transfer(0x00); // dummy data
-        switchCSpin(HIGH);
-        SPI.endTransaction();
+    switchCSpin(LOW);
+    buf[0] = SPI.transfer(0xFF); // dummy address for reading data
+    buf[1] = SPI.transfer(0x00); // dummy data
+    buf[2] = SPI.transfer(0x00); // dummy data
+    buf[3] = SPI.transfer(0x00); // dummy data
+    switchCSpin(HIGH);
+    SPI.endTransaction();
 
 		
 	}
@@ -149,7 +145,7 @@ uint8_t TMC2240Stepper::IFCNT() {
 	return read(IFCNT_t::address);
 }
 
-
+// W+R: SLAVECONF
 void TMC2240Stepper::SLAVECONF(uint16_t input) {
 	SLAVECONF_register.sr = input&0xF00;
 	write(SLAVECONF_register.address, SLAVECONF_register.sr);
@@ -163,7 +159,7 @@ void TMC2240Stepper::senddelay(uint8_t B) 	{ SLAVECONF_register.SENDDELAY = B; w
 uint8_t TMC2240Stepper::senddelay() 		{ return SLAVECONF_register.SENDDELAY; }
 
 
-
+// R: IOIN
 uint32_t TMC2240Stepper::IOIN() {
 	return read(TMC2240_n::IOIN_t::address);
 }
@@ -187,7 +183,7 @@ bool TMC2240Stepper::adc_err()		    { TMC2240_n::IOIN_t r{0}; r.sr = IOIN(); ret
 uint8_t TMC2240Stepper::silicon_rv() 	{ TMC2240_n::IOIN_t r{0}; r.sr = IOIN(); return r.silicon_rv;	}
 uint8_t TMC2240Stepper::version() 	    { TMC2240_n::IOIN_t r{0}; r.sr = IOIN(); return r.version;	}
 
-
+// R: PWM_SCALE
 uint32_t TMC2240Stepper::PWM_SCALE() {
 	return read(TMC2240_n::PWM_SCALE_t::address);
 }
@@ -196,8 +192,6 @@ uint8_t TMC2240Stepper::pwm_scale_sum() {
 	r.sr = PWM_SCALE();
 	return r.pwm_scale_sum;
 }
-
-
 
 int16_t TMC2240Stepper::pwm_scale_auto() {
 	TMC2240_n::PWM_SCALE_t r{0};
@@ -221,6 +215,45 @@ uint32_t TMC2240Stepper::PWM_AUTO() {
 uint8_t TMC2240Stepper::pwm_ofs_auto()  { PWM_AUTO_t r{0}; r.sr = PWM_AUTO(); return r.pwm_ofs_auto; }
 uint8_t TMC2240Stepper::pwm_grad_auto() { PWM_AUTO_t r{0}; r.sr = PWM_AUTO(); return r.pwm_grad_auto; }
 
+
+// R+C: GSTAT
+
+#define SET_REG_2240(SETTING) GSTAT_register.SETTING = B; write(GSTAT_register.address, GSTAT_register.sr)
+
+uint8_t TMC2240Stepper::GSTAT()  			{ return read(TMC2240_n::GSTAT_t::address); }
+void TMC2240Stepper::GSTAT(uint32_t input) {
+  GSTAT_register.sr = input;
+  write(GSTAT_register.address, GSTAT_register.sr);
+}
+
+bool  TMC2240Stepper::reset()   			{ TMC2240_n::GSTAT_t r; r.sr = GSTAT(); return r.reset; }
+bool  TMC2240Stepper::drv_err()  			{ TMC2240_n::GSTAT_t r; r.sr = GSTAT(); return r.drv_err; }
+bool  TMC2240Stepper::uv_cp()    			{ TMC2240_n::GSTAT_t r; r.sr = GSTAT(); return r.uv_cp; }
+bool  TMC2240Stepper::register_reset()  	{ TMC2240_n::GSTAT_t r; r.sr = GSTAT(); return r.register_reset; }
+bool  TMC2240Stepper::vm_uvlo()    			{ TMC2240_n::GSTAT_t r; r.sr = GSTAT(); return r.vm_uvlo; }
+
+void TMC2240Stepper::reset(bool B){
+  SET_REG_2240(reset);
+}
+void TMC2240Stepper::drv_err(bool B){
+  SET_REG_2240(drv_err);
+}
+void TMC2240Stepper::uv_cp(bool B){
+  SET_REG_2240(uv_cp);
+}
+void TMC2240Stepper::register_reset(bool B){
+  SET_REG_2240(register_reset);
+}
+void TMC2240Stepper::vm_uvlo(bool B){
+  SET_REG_2240(vm_uvlo);
+}
+
+// W: TPOWERDOWN
+uint8_t TMC2240Stepper::TPOWERDOWN() { return TPOWERDOWN_register.sr; }
+void TMC2240Stepper::TPOWERDOWN(uint8_t input) {
+  TPOWERDOWN_register.sr = input;
+  write(TPOWERDOWN_register.address, TPOWERDOWN_register.sr);
+}
 
 //******zhou******//
 
@@ -290,6 +323,22 @@ uint16_t TMC2240Stepper::rms_current() {
   return (cur_run * 3000 / 32);
 }
 
+
+uint8_t TMC2240Stepper::test_connection() {
+  uint32_t drv_status = DRV_STATUS();
+  switch (drv_status) {
+      case 0xFFFFFFFF: return 1;
+      case 0: return 2;
+      default: return 0;
+  }
+}
+
+void TMC2240Stepper::hysteresis_end(int8_t value) { hend(value+3); }
+int8_t TMC2240Stepper::hysteresis_end() { return hend()-3; };
+
+void TMC2240Stepper::hysteresis_start(uint8_t value) { hstrt(value-1); }
+uint8_t TMC2240Stepper::hysteresis_start() { return hstrt()+1; }
+
 void TMC2240Stepper::microsteps(uint16_t ms) {
   switch(ms) {
     case 256: mres(0); break;
@@ -319,64 +368,6 @@ uint16_t TMC2240Stepper::microsteps() {
   }
   return 0;
 }
-
-
-
-
-// R+C: GSTAT
-
-#define SET_REG_2240(SETTING) GSTAT_register.SETTING = B; write(GSTAT_register.address, GSTAT_register.sr)
-
-uint8_t TMC2240Stepper::GSTAT()  			{ return read(TMC2240_n::GSTAT_t::address); }
-void TMC2240Stepper::GSTAT(uint32_t input) {
-  GSTAT_register.sr = input;
-  write(GSTAT_register.address, GSTAT_register.sr);
-}
-
-
-bool  TMC2240Stepper::reset()   			{ TMC2240_n::GSTAT_t r; r.sr = GSTAT(); return r.reset; }
-bool  TMC2240Stepper::drv_err()  			{ TMC2240_n::GSTAT_t r; r.sr = GSTAT(); return r.drv_err; }
-bool  TMC2240Stepper::uv_cp()    			{ TMC2240_n::GSTAT_t r; r.sr = GSTAT(); return r.uv_cp; }
-bool  TMC2240Stepper::register_reset()  	{ TMC2240_n::GSTAT_t r; r.sr = GSTAT(); return r.register_reset; }
-bool  TMC2240Stepper::vm_uvlo()    			{ TMC2240_n::GSTAT_t r; r.sr = GSTAT(); return r.vm_uvlo; }
-
-void TMC2240Stepper::reset(bool B){
-  SET_REG_2240(reset);
-}
-void TMC2240Stepper::drv_err(bool B){
-  SET_REG_2240(drv_err);
-}
-void TMC2240Stepper::uv_cp(bool B){
-  SET_REG_2240(uv_cp);
-}
-void TMC2240Stepper::register_reset(bool B){
-  SET_REG_2240(register_reset);
-}
-void TMC2240Stepper::vm_uvlo(bool B){
-  SET_REG_2240(vm_uvlo);
-}
-
-// W: TPOWERDOWN
-uint8_t TMC2240Stepper::TPOWERDOWN() { return TPOWERDOWN_register.sr; }
-void TMC2240Stepper::TPOWERDOWN(uint8_t input) {
-  TPOWERDOWN_register.sr = input;
-  write(TPOWERDOWN_register.address, TPOWERDOWN_register.sr);
-}
-
-uint8_t TMC2240Stepper::test_connection() {
-  uint32_t drv_status = DRV_STATUS();
-  switch (drv_status) {
-      case 0xFFFFFFFF: return 1;
-      case 0: return 2;
-      default: return 0;
-  }
-}
-
-void TMC2240Stepper::hysteresis_end(int8_t value) { hend(value+3); }
-int8_t TMC2240Stepper::hysteresis_end() { return hend()-3; };
-
-void TMC2240Stepper::hysteresis_start(uint8_t value) { hstrt(value-1); }
-uint8_t TMC2240Stepper::hysteresis_start() { return hstrt()+1; }
 
 void TMC2240Stepper::blank_time(uint8_t value) {
   switch (value) {
